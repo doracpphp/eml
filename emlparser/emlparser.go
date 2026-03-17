@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
-	"github.com/sg3des/eml"
+	"github.com/doracpphp/eml"
 )
 
 var (
@@ -24,33 +23,33 @@ func init() {
 }
 
 func main() {
-	emlraw, err := ioutil.ReadFile(Filename)
+	emlraw, err := os.ReadFile(Filename)
 	checkerr(err, "file "+Filename+" not found or can not be readed")
 
 	m, err := eml.Parse(emlraw)
 	checkerr(err, "failed parse file")
 
-	dir := Filename[0 : len(Filename)-len(path.Ext(Filename))] //crop extension
+	dir := Filename[0 : len(Filename)-len(filepath.Ext(Filename))] //crop extension
 
 	err = os.MkdirAll(dir, 0755)
 	checkerr(err, "failed create directory for save data")
 
 	for _, attachment := range m.Attachments {
-		err = ioutil.WriteFile(path.Join(dir, attachment.Filename), attachment.Data, 0755)
+		err = os.WriteFile(filepath.Join(dir, attachment.Filename), attachment.Data, 0755)
 		checkerr(err, "failed save attachment "+attachment.Filename)
 	}
 
 	if len(m.Html) > 0 {
-		err = ioutil.WriteFile(path.Join(dir, "body.html"), []byte(m.Html), 0755)
+		err = os.WriteFile(filepath.Join(dir, "body.html"), []byte(m.Html), 0755)
 		checkerr(err, "failed save html body")
 	}
 	if len(m.Text) > 0 {
-		err = ioutil.WriteFile(path.Join(dir, "body.txt"), []byte(m.Text), 0755)
+		err = os.WriteFile(filepath.Join(dir, "body.txt"), []byte(m.Text), 0755)
 		checkerr(err, "failed save text body")
 	}
 
 	header := []string{m.Date.String(), m.Subject, m.From[0].Email(), m.To[0].Email()}
-	err = ioutil.WriteFile(path.Join(dir, "header.txt"), []byte(strings.Join(header, "\n")), 0755)
+	err = os.WriteFile(filepath.Join(dir, "header.txt"), []byte(strings.Join(header, "\n")), 0755)
 	checkerr(err, "failed save headers")
 
 }

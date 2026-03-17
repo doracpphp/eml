@@ -10,13 +10,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"mime/quotedprintable"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/sg3des/eml/decoder"
+	"github.com/doracpphp/eml/decoder"
 )
 
 var benc = base64.URLEncoding
@@ -188,7 +188,7 @@ func Process(r RawMessage) (m Message, e error) {
 									fmt.Println(er, "failed decode base64")
 								}
 							case "quoted-printable":
-								part.Data, _ = ioutil.ReadAll(quotedprintable.NewReader(bytes.NewReader(part.Data)))
+								part.Data, _ = io.ReadAll(quotedprintable.NewReader(bytes.NewReader(part.Data)))
 							}
 						}
 						m.Attachments = append(m.Attachments, Attachment{filename[1], part.Data})
@@ -272,13 +272,13 @@ func ParseRaw(s []byte) (m RawMessage, e error) {
 			}
 		case HVAL:
 			if b == CR && i < len(s)-2 && s[i+1] == LF && !isWSP(s[i+2]) {
-				v := bytes.Replace(s[vstart:i], CRLF, nil, -1)
+				v := bytes.ReplaceAll(s[vstart:i], CRLF, nil)
 				hdr := RawHeader{s[kstart:kend], v}
 				m.RawHeaders = append(m.RawHeaders, hdr)
 				state = READY
 				i++
 			} else if b == LF && i < len(s)-1 && !isWSP(s[i+1]) {
-				v := bytes.Replace(s[vstart:i], CRLF, nil, -1)
+				v := bytes.ReplaceAll(s[vstart:i], CRLF, nil)
 				hdr := RawHeader{s[kstart:kend], v}
 				m.RawHeaders = append(m.RawHeaders, hdr)
 				state = READY
